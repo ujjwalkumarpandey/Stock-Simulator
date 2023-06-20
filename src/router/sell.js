@@ -403,7 +403,7 @@ router.post("/autoSellStock", middlewares.verifyUser, (req, res) => {
           //password matches with username
           //check for sufficient balance
 
-          var sql = `select * from userstocks where username='${username}' and id='${symbol}'`;
+          var sql = `select * from userStocks where username='${username}' and id='${symbol}'`;
 
           con.query(sql, (error, result) => {
             if (error) {
@@ -427,7 +427,7 @@ router.post("/autoSellStock", middlewares.verifyUser, (req, res) => {
                     if (result[0]) {
                       //if stock already in autoSell
                       // check whether units are sufficient
-                      
+
                       var newUnits = result[0].units + units;
                       if (curr_units < newUnits) {
                         console.log("insufficient units");
