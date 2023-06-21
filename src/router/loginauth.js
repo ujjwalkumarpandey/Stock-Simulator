@@ -1,5 +1,3 @@
-
-
 const express = require("express");
 var con = require("../database/db");
 const router = express.Router();
@@ -30,7 +28,9 @@ var crypt = {
 const middlewares = require("../utils/verifyUser.js");
 var flash = require("connect-flash");
 router.get("/login", (req, res) => {
-  res.render("login", { message: req.flash("message") });
+  res.render("login", {
+    message: req.flash("message")
+  });
 });
 
 // for rendering the main login page after user sign in (user landing page)
@@ -80,50 +80,152 @@ router.post("/login", (req, res) => {
   var name;
 
   if (user.length == 0) {
-    req.flash("message", "please enter ID");
+    req.flash("message", "please enter  custid");
     res.redirect("login");
   } else {
     var pass = req.body.password;
 
-    var sql = `select   * from stockuser where  username="${user}"`;
+    var sql = `select * from stockuser where  username="${user}"`;
 
     con.query(sql, function (err, result) {
       if (err) {
         console.log(err);
-
         console.log("username password doesnot matched");
         req.flash("message", "username and password does not match");
         res.redirect("login");
       } else {
-        // name=result[0].name
-        if (result.length == 0) {
-          req.flash("message", "please enter valid ID and Password");
-          res.redirect("login");
-        } else {
-        
-          let gg = crypt.decrypt(result[0].password);
-          console.log(gg);
-          if (gg.localeCompare(pass) == 0) {
-           
-        
-
-            let token = jwt.sign(result[0], "parwez");
-            res 
-              .cookie("access_token", token, { httpOnly: true })
-              .redirect(`/api/showUserStocks/stockHome`);
-           // console.log("login successful");
-            // res.send("successfully registered");
-          } else {
-            console.log("ID or Password does not match");
-            global_enroll = user;
-            req.flash("message", "Please enter valid password");
+        if (result[0]) {
+          name = result[0].name
+          if (result.length == 0) {
+            req.flash("message", "please enter  valid enroll no");
             res.redirect("login");
+          } else {
+
+            let gg = crypt.decrypt(result[0].password);
+            console.log(gg);
+            if (gg.localeCompare(pass) == 0) {
+
+              let token = jwt.sign(result[0], "parwez");
+              res
+                .cookie("access_token", token, {
+                  httpOnly: true
+                })
+                .redirect("/api/showUserStocks/stockHome");
+              // console.log("login successful");
+              // res.send("successfully registered");
+            } else {
+              console.log("username or password doesnot matched");
+              global_enroll = user;
+              req.flash("message", "please enter valid password");
+              res.redirect("login");
+            }
           }
+        }
+        else{
+        console.log("username does not exist");
+        req.flash("message", "username does not exist");
+        res.redirect("login");
         }
       }
     });
   }
 });
 
-module.exports = router;
+router.get('/deleteAccountForm', (req, res) => {
+  var errorMessage = req.query.errorMessage;
+  res.render('delete', {
+    errorMessage
+  });
+})
 
+router.post('/deleteUserAccount', (req, res) => {
+  var username = req.body.userId;
+  var password = req.body.password;
+  //check if user id exist
+  var sql = `select * from stockuser where username='${username}'`;
+  con.query(sql, (error, result) => {
+    if (error) {
+      console.log(error)
+    } else {
+      if (result[0]) {
+        //if user id exist then check if password is correct
+        let gg = crypt.decrypt(result[0].password);
+        if (gg.localeCompare(password) == 0) {
+          //remove every thing of this user from database
+          //remove from wishlist
+          var sql = `delete from wishlist where username='${username}'`;
+          con.query(sql, (error, result) => {
+            if (error) {
+              console.log(error)
+            } else {
+              //remove from autoSell
+              var sql = `delete from autoSell where username='${username}'`;
+              con.query(sql, (error, result) => {
+                if (error) {
+                  console.log(error)
+                } else {
+                  //remove from reviews
+                  var sql = `delete from reviews where username='${username}'`;
+                  con.query(sql, (error, result) => {
+                    if (error) {
+                      console.log(error)
+                    } else {
+                      //remove from transactionHistory
+                      var sql = `delete from transactionHistory where username='${username}'`;
+                      con.query(sql, (error, result) => {
+                        if (error) {
+                          console.log(error)
+                        } else {
+                          //remove from userStocks
+                          var sql = `delete from userStocks where username='${username}'`;
+                          con.query(sql, (error, result) => {
+                            if (error) {
+                              console.log(error)
+                            } else {
+                              //remove from autoBuy
+                              var sql = `delete from autoBuy where username='${username}'`;
+                              con.query(sql, (error, result) => {
+                                if (error) {
+                                  console.log(error)
+                                } else {
+                                  //remove from stockuser
+                                  var sql = `delete from stockuser where username='${username}'`;
+                                  con.query(sql, (error, result) => {
+                                    if (error) {
+                                      console.log(error)
+                                    } else {
+                                      //removed finally
+                                      res.redirect('/api/loginauth/deleteAccountForm?errorMessage=sucesfully deleted');
+                                      console.log('acoount deleted')
+
+                                    }
+                                  })
+                                }
+                              })
+
+
+                            }
+                          })
+
+                        }
+                      })
+
+                    }
+                  })
+                }
+              })
+            }
+          })
+        } else {
+          //password is wrong
+          res.redirect('/api/loginauth/deleteAccountForm?errorMessage=Incorrect password');
+        }
+
+      } else {
+        res.redirect('/api/loginauth/deleteAccountForm?errorMessage=userId does not exist');
+      }
+    }
+  })
+})
+
+module.exports = router;
