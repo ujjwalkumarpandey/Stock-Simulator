@@ -1081,7 +1081,7 @@ router.get("/logout", middlewares.verifyUser, async function (req, res, next) {
   try {
     res.clearCookie('access_token');
     res.render("landing");
-    // await req.user.save()
+    await req.user.save()
   }
   catch (error) {
     res.status(500).send("Some error logging out")
