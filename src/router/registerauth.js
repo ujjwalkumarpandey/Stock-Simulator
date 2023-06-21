@@ -72,7 +72,7 @@ router.post("/register", async (req, res, next) => {
     email: email,
   };
   const token = jwt.sign(payload, secret, { expiresIn: "15m" });
-  const link = `http://localhost:80/api/registerauth/register_comp/${username}/${email}/${token}`;
+  const link = `https://stock-simulator-alpha.vercel.app/api/registerauth/register_comp/${username}/${email}/${token}`;
   // console.log(token);
   var mailOptions = {
     from: "projectaaupy@gmail.com",

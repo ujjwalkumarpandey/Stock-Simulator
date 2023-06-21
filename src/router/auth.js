@@ -72,7 +72,7 @@ router.post("/forget-password",async (req, res, next)=>{
         email: email_from_database,
       };
       const token = jwt.sign(payload, secret, { expiresIn: "15m" });
-      const link = `http://localhost:80/api/auth/reset-password/${enrollment}/${token}`;
+      const link = `https://stock-simulator-alpha.vercel.app/api/auth/reset-password/${enrollment}/${token}`;
        console.log(email);
       var mailOptions = {
         from: "projectaaupy@gmail.com",
