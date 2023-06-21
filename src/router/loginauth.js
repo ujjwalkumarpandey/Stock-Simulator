@@ -89,7 +89,8 @@ router.post("/login", (req, res) => {
 
     con.query(sql, function (err, result) {
       if (err) {
-        console.log(err);
+        // console.log(err);
+        res.status(500).send(err)
         console.log("username password doesnot matched");
         req.flash("message", "username and password does not match");
         res.redirect("login");
