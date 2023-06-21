@@ -271,7 +271,7 @@ router.post("/sellStock", middlewares.verifyUser, async (req, res) => {
 //user review
 
 ///auto buy
-router.get("/autoBuy", middlewares.verifyUser, (req, res) => {
+router.get("/autoBuy", middlewares.verifyUser, async (req, res) => {
   var id = req.query.id;
   var error = req.query.error;
   console.log("id from get auto buy" + id);
@@ -281,7 +281,7 @@ router.get("/autoBuy", middlewares.verifyUser, (req, res) => {
   });
 });
 
-router.post("/autoBuyStock", middlewares.verifyUser, (req, res) => {
+router.post("/autoBuyStock", middlewares.verifyUser, async (req, res) => {
   var symbol2 = req.body.stockid;
   let symbol = symbol2.substring(0, symbol2.length - 3);
   console.log(symbol);
@@ -366,7 +366,7 @@ router.post("/autoBuyStock", middlewares.verifyUser, (req, res) => {
 });
 
 ////auto sell
-router.get("/autoSell", middlewares.verifyUser, (req, res) => {
+router.get("/autoSell", middlewares.verifyUser,async (req, res) => {
   var id = req.query.id;
 
   var error = req.query.error;
@@ -378,7 +378,7 @@ router.get("/autoSell", middlewares.verifyUser, (req, res) => {
 });
 
 ////
-router.post("/autoSellStock", middlewares.verifyUser, (req, res) => {
+router.post("/autoSellStock", middlewares.verifyUser,async (req, res) => {
   var symbol2 = req.body.stockid;
   let symbol = symbol2.substring(0, symbol2.length - 3);
   console.log(symbol);
