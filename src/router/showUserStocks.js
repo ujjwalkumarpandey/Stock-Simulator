@@ -903,7 +903,7 @@ router.get("/buyWishlist", middlewares.verifyUser, async (req, res) => {
 
   try {
     var id = req.query.id;
-    // console.log(id + "knd");
+    console.log(id + "knd");
     var name = req.query.name;
     var units = req.query.units;
     var username = req.user.username;
@@ -1079,7 +1079,7 @@ router.get("/buyWishlist", middlewares.verifyUser, async (req, res) => {
 // logout
 router.get("/logout", middlewares.verifyUser, async function (req, res, next) {
   try {
-    // res.clearCookie('access_token');
+    res.clearCookie('access_token');
     res.render("landing");
     // await req.user.save()
   }
