@@ -73,7 +73,7 @@ router.get("/get_data2", middlewares.verifyUser, (req, res, next) => {
   }
 });
 
-router.post("/login", (req, res) => {
+router.post("/login", async (req, res) => {
   //  console.log(userkiId);
 
   var user = req.body.custid;
