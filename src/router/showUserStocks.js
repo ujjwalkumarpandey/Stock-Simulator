@@ -1080,7 +1080,7 @@ router.get("/buyWishlist", middlewares.verifyUser, async (req, res) => {
 router.get("/logout", middlewares.verifyUser, async function (req, res, next) {
   try {
     res.clearCookie('access_token');
-    res.render("landing");
+    res.redirect("/landing");
     // await req.user.save()
   }
   catch (error) {
