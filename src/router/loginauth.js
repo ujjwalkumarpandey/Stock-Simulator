@@ -87,7 +87,7 @@ router.post("/login", async (req, res) => {
 
     var sql = `select * from stockuser where  username="${user}"`;
 
-    await con.query(sql, function (err, result) {
+    con.query(sql, function (err, result) {
       if (err) {
         console.log(err);
         res.status(500).send(err)
