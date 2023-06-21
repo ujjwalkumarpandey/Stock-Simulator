@@ -1079,7 +1079,7 @@ router.get("/buyWishlist", middlewares.verifyUser, async (req, res) => {
 // logout
 router.get("/logout", middlewares.verifyUser, async function (req, res, next) {
   try {
-    res.clearCookie('access_token');
+    // res.clearCookie('access_token');
     res.render("landing");
     // await req.user.save()
   }
