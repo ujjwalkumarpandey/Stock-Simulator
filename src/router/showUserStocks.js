@@ -226,149 +226,158 @@ router.post("/post", middlewares.verifyUser, async (req, res) => {
 
     // console.log(crypt.encrypt(password));
 
-    var sql = `select * from stockuser where username='${userId}'`;
-    con.query(sql, (error, result) => {
-      if (error) {
-        console.log(error);
-      } else {
-        console.log(result);
+    if (userId.localeCompare(req.user.username) != 0) {
+      res.redirect(
+        `/api/showUserStocks/productDescription?id=${id}&identifier=${identifier}&open=${open}&dayHigh=${dayHigh}&dayLow=${dayLow}&lastPrice=${lastPrice}&previousClose=${previousClose}&change=${change}&pChange=${pChange}&totalTradedVolume=${totalTradedVolume}&totalTradedValue=${totalTradedValue}&lastUpdateTime=${lastUpdateTime}&yearHigh=${yearHigh}&yearLow=${yearLow}&perChange365d=${perChange365d}&perChange30d=${perChange30d}&error=` +
+        encodeURIComponent("Please enter correct UserId")
+      );
+      return;
+    }
+    else {
+      var sql = `select * from stockuser where username='${req.user.username}'`;
+      con.query(sql, (error, result) => {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log(result);
 
-        // console.log(result);
-        let gg = crypt.decrypt(result[0].password);
-        if (gg.localeCompare(password) == 0) {
-          if (result[0]) {
-            //
-            var cost = units * open;
+          let gg = crypt.decrypt(result[0].password);
+          if (gg.localeCompare(password) == 0) {
+            if (result[0]) {
+              //
+              var cost = units * open;
 
-            // console.log("cost " + cost);
+              // console.log("cost " + cost);
 
-            if (cost > result[0].amount) {
-              //req.flash("message", "please enter  custid");
+              if (cost > result[0].amount) {
+                //req.flash("message", "please enter  custid");
+                res.redirect(
+                  `/api/showUserStocks/productDescription?id=${id}&identifier=${identifier}&open=${open}&dayHigh=${dayHigh}&dayLow=${dayLow}&lastPrice=${lastPrice}&previousClose=${previousClose}&change=${change}&pChange=${pChange}&totalTradedVolume=${totalTradedVolume}&totalTradedValue=${totalTradedValue}&lastUpdateTime=${lastUpdateTime}&yearHigh=${yearHigh}&yearLow=${yearLow}&perChange365d=${perChange365d}&perChange30d=${perChange30d}&error=` +
+                  encodeURIComponent("Insufficient-Fund")
+                );
+              } else {
+                //update the balance of user in buyer table
+                var newAmount = result[0].amount - cost;
+                var sql2 = `update stockuser set amount=${newAmount} where username='${req.user.username}'`;
+                con.query(sql2, (error, result) => {
+                  if (error) {
+                    // console.log(error);
+                  }
+                });
+                ////
+
+                //check if stock already present in userStocks
+                var sql = `SELECT * FROM userStocks WHERE id=? and username='${req.user.username}'`;
+                con.query(sql, [id], (error, result) => {
+                  if (error) {
+                    console.log(error);
+                  }
+                  // console.log(result);
+                  if (result[0]) {
+                    //if exist
+                    var newUnit = result[0].units + units;
+                    var newamt = result[0].amt_invested + cost;
+
+                    var sql = `UPDATE userStocks set units=${newUnit}, amt_invested=${newamt} WHERE id="${id}" and username='${req.user.username}'`;
+                    con.query(sql, (error, result) => {
+                      if (error) {
+                        console.log(error);
+                      }
+                      // alert('Succefully done');
+                      else {
+                        const currentDate = new Date();
+
+                        const year = currentDate.getFullYear();
+                        const month = currentDate.getMonth() + 1;
+                        const day = currentDate.getDate();
+
+                        const hours = currentDate.getHours();
+                        const minutes = currentDate.getMinutes();
+                        const seconds = currentDate.getSeconds();
+
+                        const formattedDate = `${day}-${month}-${year}`;
+                        const formattedTime = `${hours}:${minutes}:${seconds}`;
+                        var sql = `insert into transactionHistory values('${id}',${units},${cost * -1},'${formattedDate}','${formattedTime}','${req.user.username}')`;
+                        con.query(sql, (error, result) => {
+                          if (error) {
+                            console.log(error);
+                          } else {
+                            res.redirect(
+                              `/api/showUserStocks/productDescription?id=${id}&identifier=${identifier}&open=${open}&dayHigh=${dayHigh}&dayLow=${dayLow}&lastPrice=${lastPrice}&previousClose=${previousClose}&change=${change}&pChange=${pChange}&totalTradedVolume=${totalTradedVolume}&totalTradedValue=${totalTradedValue}&lastUpdateTime=${lastUpdateTime}&yearHigh=${yearHigh}&yearLow=${yearLow}&perChange365d=${perChange365d}&perChange30d=${perChange30d}&error=` +
+                              encodeURIComponent("Transaction-successfull")
+                            );
+                            //console.log("sold finalyy");
+                          }
+                        });
+                      }
+                    });
+                  } else {
+                    // console.log(req.user.username);
+
+                    var sql = `INSERT INTO userStocks VALUES(?,?,?,?,?)`;
+                    // console.log(name);
+
+                    var values = [id, name, units, cost, req.user.username];
+                    // console.log(values);
+
+                    con.query(sql, values, (error, result) => {
+                      if (error) {
+                        res.redirect(
+                          `/api/showUserStocks/productDescription?id=${id}&identifier=${identifier}&open=${open}&dayHigh=${dayHigh}&dayLow=${dayLow}&lastPrice=${lastPrice}&previousClose=${previousClose}&change=${change}&pChange=${pChange}&totalTradedVolume=${totalTradedVolume}&totalTradedValue=${totalTradedValue}&lastUpdateTime=${lastUpdateTime}&yearHigh=${yearHigh}&yearLow=${yearLow}&perChange365d=${perChange365d}&perChange30d=${perChange30d}&error=` +
+                          encodeURIComponent("Transaction Unsuccessful")
+                        );
+                      } else {
+                        const currentDate = new Date();
+
+                        const year = currentDate.getFullYear();
+                        const month = currentDate.getMonth() + 1;
+                        const day = currentDate.getDate();
+
+                        const hours = currentDate.getHours();
+                        const minutes = currentDate.getMinutes();
+                        const seconds = currentDate.getSeconds();
+
+                        const formattedDate = `${day}-${month}-${year}`;
+                        const formattedTime = `${hours}:${minutes}:${seconds}`;
+                        var sql = `insert into transactionHistory values('${id}',${units},${cost * -1},'${formattedDate}','${formattedTime}','${req.user.username}')`;
+                        con.query(sql, (error, result) => {
+                          if (error) {
+                            console.log(error);
+                          } else {
+                            res.redirect(
+                              `/api/showUserStocks/productDescription?id=${id}&identifier=${identifier}&open=${open}&dayHigh=${dayHigh}&dayLow=${dayLow}&lastPrice=${lastPrice}&previousClose=${previousClose}&change=${change}&pChange=${pChange}&totalTradedVolume=${totalTradedVolume}&totalTradedValue=${totalTradedValue}&lastUpdateTime=${lastUpdateTime}&yearHigh=${yearHigh}&yearLow=${yearLow}&perChange365d=${perChange365d}&perChange30d=${perChange30d}&error=` +
+                              encodeURIComponent("Transaction-successfull")
+                            );
+                            //console.log("sold finalyy");
+                          }
+                        });
+                      }
+
+                      // alert('Succefully done');
+                    });
+                  }
+                });
+              }
+            } else {
+              // res.redirect('buy')
               res.redirect(
                 `/api/showUserStocks/productDescription?id=${id}&identifier=${identifier}&open=${open}&dayHigh=${dayHigh}&dayLow=${dayLow}&lastPrice=${lastPrice}&previousClose=${previousClose}&change=${change}&pChange=${pChange}&totalTradedVolume=${totalTradedVolume}&totalTradedValue=${totalTradedValue}&lastUpdateTime=${lastUpdateTime}&yearHigh=${yearHigh}&yearLow=${yearLow}&perChange365d=${perChange365d}&perChange30d=${perChange30d}&error=` +
-                encodeURIComponent("Insufficient-Fund")
+                encodeURIComponent("user-not exist")
               );
-            } else {
-              //update the balance of user in buyer table
-              var newAmount = result[0].amount - cost;
-              var sql2 = `update stockuser set amount=${newAmount} where username='${userId}'`;
-              con.query(sql2, (error, result) => {
-                if (error) {
-                  // console.log(error);
-                }
-              });
-              ////
-
-              //check if stock already present in userStocks
-              var sql = `SELECT * FROM userStocks WHERE id=? and username='${req.user.username}'`;
-              con.query(sql, [id], (error, result) => {
-                if (error) {
-                  console.log(error);
-                }
-                // console.log(result);
-                if (result[0]) {
-                  //if exist
-                  var newUnit = result[0].units + units;
-                  // console.log("djshfdus->"+result[0].units);
-                  var newamt = result[0].amt_invested + cost;
-                  // console.log('yyyy', newUnit);
-                  // console.log('newamt', newAmount);
-                  var sql = `UPDATE userStocks set units=${newUnit}, amt_invested=${newamt} WHERE id="${id}" and username='${req.user.username}'`;
-                  con.query(sql, (error, result) => {
-                    if (error) {
-                      console.log(error);
-                    }
-                    // alert('Succefully done');
-                    else {
-                      const currentDate = new Date();
-
-                      const year = currentDate.getFullYear();
-                      const month = currentDate.getMonth() + 1;
-                      const day = currentDate.getDate();
-
-                      const hours = currentDate.getHours();
-                      const minutes = currentDate.getMinutes();
-                      const seconds = currentDate.getSeconds();
-
-                      const formattedDate = `${day}-${month}-${year}`;
-                      const formattedTime = `${hours}:${minutes}:${seconds}`;
-                      var sql = `insert into transactionHistory values('${id}',${units},${cost * -1},'${formattedDate}','${formattedTime}','${req.user.username}')`;
-                      con.query(sql, (error, result) => {
-                        if (error) {
-                          console.log(error);
-                        } else {
-                          res.redirect(
-                            `/api/showUserStocks/productDescription?id=${id}&identifier=${identifier}&open=${open}&dayHigh=${dayHigh}&dayLow=${dayLow}&lastPrice=${lastPrice}&previousClose=${previousClose}&change=${change}&pChange=${pChange}&totalTradedVolume=${totalTradedVolume}&totalTradedValue=${totalTradedValue}&lastUpdateTime=${lastUpdateTime}&yearHigh=${yearHigh}&yearLow=${yearLow}&perChange365d=${perChange365d}&perChange30d=${perChange30d}&error=` +
-                            encodeURIComponent("Transaction-successfull")
-                          );
-                          //console.log("sold finalyy");
-                        }
-                      });
-                    }
-                  });
-                } else {
-                  // console.log(req.user.username);
-
-                  var sql = `INSERT INTO userStocks VALUES(?,?,?,?,?)`;
-                  // console.log(name);
-
-                  var values = [id, name, units, cost, req.user.username];
-                  // console.log(values);
-
-                  con.query(sql, values, (error, result) => {
-                    if (error) {
-                      res.redirect(
-                        `/api/showUserStocks/productDescription?id=${id}&identifier=${identifier}&open=${open}&dayHigh=${dayHigh}&dayLow=${dayLow}&lastPrice=${lastPrice}&previousClose=${previousClose}&change=${change}&pChange=${pChange}&totalTradedVolume=${totalTradedVolume}&totalTradedValue=${totalTradedValue}&lastUpdateTime=${lastUpdateTime}&yearHigh=${yearHigh}&yearLow=${yearLow}&perChange365d=${perChange365d}&perChange30d=${perChange30d}&error=` +
-                        encodeURIComponent("Transaction Unsuccessful")
-                      );
-                    } else {
-                      const currentDate = new Date();
-
-                      const year = currentDate.getFullYear();
-                      const month = currentDate.getMonth() + 1;
-                      const day = currentDate.getDate();
-
-                      const hours = currentDate.getHours();
-                      const minutes = currentDate.getMinutes();
-                      const seconds = currentDate.getSeconds();
-
-                      const formattedDate = `${day}-${month}-${year}`;
-                      const formattedTime = `${hours}:${minutes}:${seconds}`;
-                      var sql = `insert into transactionHistory values('${id}',${units},${cost * -1},'${formattedDate}','${formattedTime}','${req.user.username}')`;
-                      con.query(sql, (error, result) => {
-                        if (error) {
-                          console.log(error);
-                        } else {
-                          res.redirect(
-                            `/api/showUserStocks/productDescription?id=${id}&identifier=${identifier}&open=${open}&dayHigh=${dayHigh}&dayLow=${dayLow}&lastPrice=${lastPrice}&previousClose=${previousClose}&change=${change}&pChange=${pChange}&totalTradedVolume=${totalTradedVolume}&totalTradedValue=${totalTradedValue}&lastUpdateTime=${lastUpdateTime}&yearHigh=${yearHigh}&yearLow=${yearLow}&perChange365d=${perChange365d}&perChange30d=${perChange30d}&error=` +
-                            encodeURIComponent("Transaction-successfull")
-                          );
-                          //console.log("sold finalyy");
-                        }
-                      });
-                    }
-
-                    // alert('Succefully done');
-                  });
-                }
-              });
             }
           } else {
-            // res.redirect('buy')
+            // console.log("incorrect password");
             res.redirect(
               `/api/showUserStocks/productDescription?id=${id}&identifier=${identifier}&open=${open}&dayHigh=${dayHigh}&dayLow=${dayLow}&lastPrice=${lastPrice}&previousClose=${previousClose}&change=${change}&pChange=${pChange}&totalTradedVolume=${totalTradedVolume}&totalTradedValue=${totalTradedValue}&lastUpdateTime=${lastUpdateTime}&yearHigh=${yearHigh}&yearLow=${yearLow}&perChange365d=${perChange365d}&perChange30d=${perChange30d}&error=` +
-              encodeURIComponent("user-not exist")
+              encodeURIComponent("Invalid-Password")
             );
           }
-        } else {
-          // console.log("incorrect password");
-          res.redirect(
-            `/api/showUserStocks/productDescription?id=${id}&identifier=${identifier}&open=${open}&dayHigh=${dayHigh}&dayLow=${dayLow}&lastPrice=${lastPrice}&previousClose=${previousClose}&change=${change}&pChange=${pChange}&totalTradedVolume=${totalTradedVolume}&totalTradedValue=${totalTradedValue}&lastUpdateTime=${lastUpdateTime}&yearHigh=${yearHigh}&yearLow=${yearLow}&perChange365d=${perChange365d}&perChange30d=${perChange30d}&error=` +
-            encodeURIComponent("Invalid-Password")
-          );
         }
-      }
-    });
+      });
+    }
+
+
+
   } catch (error) {
     if (error) {
       // console.log(error);

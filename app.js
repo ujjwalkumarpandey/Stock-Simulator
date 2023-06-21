@@ -188,12 +188,12 @@ app.get("/get_data", async (req, res) => {
     "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=IBM&interval=5min&apikey=9Q7QICP9RWAT4SAS";
 
   await request.get({
-      url: url,
-      json: true,
-      headers: {
-        "User-Agent": "request"
-      },
+    url: url,
+    json: true,
+    headers: {
+      "User-Agent": "request"
     },
+  },
     (err, ress, data) => {
       if (err) {
         console.log("Error:", err);
@@ -254,11 +254,11 @@ var autoBuy = async function () {
             const index = "NIFTY 200";
             const response = await fetch(
               `https://latest-stock-price.p.rapidapi.com/price?Indices=${index}&Identifier=${ident}`, {
-                headers: {
-                  "x-rapidapi-host": "latest-stock-price.p.rapidapi.com",
-                  "x-rapidapi-key": apiKey,
-                },
-              }
+              headers: {
+                "x-rapidapi-host": "latest-stock-price.p.rapidapi.com",
+                "x-rapidapi-key": apiKey,
+              },
+            }
             );
 
             const data = await response.json();
@@ -267,7 +267,7 @@ var autoBuy = async function () {
 
           } catch (err) {
             console.log('error occurred: ' + err);
-            
+
           }
         };
 
@@ -287,7 +287,6 @@ var autoBuy = async function () {
               // console.log('units to buy: ' + units);
 
               //check for sufficient balance
-              // console.log('username: ' + element.username);
               var sql = `select * from stockuser where username='${element.username}'`;
               db.query(sql, (error, result) => {
                 if (error) {
@@ -296,10 +295,7 @@ var autoBuy = async function () {
 
                   var newPr = price * units;
                   var old_bal = result[0].amount;
-                  // console.log('user balance: ' + result[0].amount)
-                  // console.log('new price: ' + newPr)
-                  // console.log('price: ' + price)
-                  // console.log('units: ' + units)
+
                   //if balance is sufficient
                   if (result[0].amount >= newPr) {
                     //buy it
@@ -351,7 +347,7 @@ var autoBuy = async function () {
                                     const formattedTime = `${hours}:${minutes}:${seconds}`;
                                     ////////
                                     //put the value in transaction history
-                                    var sql = `insert into transactionHistory values('${element.id}',${element.units},${-1*newPr},'${formattedDate}','${formattedTime}','${element.username}')`;
+                                    var sql = `insert into transactionHistory values('${element.id}',${element.units},${-1 * newPr},'${formattedDate}','${formattedTime}','${element.username}')`;
                                     db.query(sql, (error, result) => {
                                       if (error) {
                                         console.log(error)
@@ -378,31 +374,48 @@ var autoBuy = async function () {
                             if (error) {
                               console.log(error);
                             } else {
-                              //updated in userstocks table
-                              //get todays date and time
-                              const currentDate = new Date();
+                              //updated in userstocks table now delete it from auto buy
+                              var sql = `delete from autoBuy where id='${element.id}' and username='${element.username}' and selected_price='${element.selected_price}'`;
 
-                              const year = currentDate.getFullYear();
-                              const month = currentDate.getMonth() + 1;
-                              const day = currentDate.getDate();
-
-                              const hours = currentDate.getHours();
-                              const minutes = currentDate.getMinutes();
-                              const seconds = currentDate.getSeconds();
-
-                              const formattedDate = `${day}-${month}-${year}`;
-                              const formattedTime = `${hours}:${minutes}:${seconds}`;
-                              ////////
-                              //put the value in transaction history
-                              var sql = `insert into transactionHistory values('${element.id}',${element.units},${-1*newPr},'${formattedDate}','${formattedTime}','${element.username}')`;
                               db.query(sql, (error, result) => {
                                 if (error) {
-                                  console.log(error)
-                                } else {
-                                  console.log('bought finally')
-                                  console.log('')
+                                  console.log(error);
                                 }
-                              })
+                                else {
+                                  //deleted
+                                  //update the amount in stockUser
+                                  var newBal = old_bal - newPr;
+                                  var sql = `update stockuser set amount=${newBal} where username='${element.username}'`;
+                                  db.query(sql, (error, result) => {
+                                    console.log('balance updated');
+                                    // console.log('bought');
+
+                                    //get todays date and time
+                                    const currentDate = new Date();
+
+                                    const year = currentDate.getFullYear();
+                                    const month = currentDate.getMonth() + 1;
+                                    const day = currentDate.getDate();
+
+                                    const hours = currentDate.getHours();
+                                    const minutes = currentDate.getMinutes();
+                                    const seconds = currentDate.getSeconds();
+
+                                    const formattedDate = `${day}-${month}-${year}`;
+                                    const formattedTime = `${hours}:${minutes}:${seconds}`;
+                                    ////////
+                                    //put the value in transaction history
+                                    var sql = `insert into transactionHistory values('${element.id}',${element.units},${-1 * newPr},'${formattedDate}','${formattedTime}','${element.username}')`;
+                                    db.query(sql, (error, result) => {
+                                      if (error) {
+                                        console.log(error)
+                                      } else {
+                                        console.log('bought finally')
+                                      }
+                                    })
+                                  });
+                                }
+                              });
 
                             }
                           })
@@ -431,7 +444,7 @@ var autoBuy = async function () {
 // autoBuy();
 setInterval(() => {
   autoBuy();
-}, 2000);
+}, 10000);
 /////////
 
 
@@ -455,11 +468,11 @@ var autoSell = async function () {
             const index = "NIFTY 200";
             const response = await fetch(
               `https://latest-stock-price.p.rapidapi.com/price?Indices=${index}&Identifier=${ident}`, {
-                headers: {
-                  "x-rapidapi-host": "latest-stock-price.p.rapidapi.com",
-                  "x-rapidapi-key": apiKey,
-                },
-              }
+              headers: {
+                "x-rapidapi-host": "latest-stock-price.p.rapidapi.com",
+                "x-rapidapi-key": apiKey,
+              },
+            }
             );
 
             const data = await response.json();
@@ -602,7 +615,7 @@ var autoSell = async function () {
 // autoSell();
 setInterval(() => {
   autoSell();
-}, 2000);
+}, 10000);
 /////
 
 ////////////
